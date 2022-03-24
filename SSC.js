@@ -463,7 +463,7 @@ function compileSB3(json, assets = {}, settings = {}){
                   TYPE_BOOLEAN,
                   null,
                   (
-                    !isNum(left[2]) ||!isNum(right[2]) ?
+                    !isNum(left[2]) || !isNum(right[2]) ?
                     left[2].toString().toLowerCase() == right[2].toString().toLowerCase() :
                     +left[2] == +right[2]
                   )
