@@ -3,31 +3,31 @@
   <head>
   </head>
   <body>
-		<p>Please input a Scratch project.json file</p>
-		<input type="file" id="input" />
+    <p>Please input a Scratch project.json file</p>
+    <input type="file" id="input" />
 
-		<script src="render.js"></script>
-		<script src="engine.js"></script>
-		
+    <script src="render.js"></script>
+    <script src="engine.js"></script>
+    
     <script src="SSC.js"></script>
-		<script>
-			const input = document.getElementById("input");
-			const pre = document.getElementById("pre");
+    <script>
+      const input = document.getElementById("input");
+      const pre = document.getElementById("pre");
 
-			input.addEventListener("change", function(){
-				const file = input.files[0];
-				const reader = new FileReader();
+      input.addEventListener("change", function(){
+        const file = input.files[0];
+        const reader = new FileReader();
 
-				reader.addEventListener("load", function(){
-					const res = compileSB3(JSON.parse(reader.result), {});
-					console.log("Compiled:");
-					console.log(res);
+        reader.addEventListener("load", function(){
+          const res = compileSB3(JSON.parse(reader.result), {});
+          console.log("Compiled:");
+          console.log(res);
 
-					new Function(res)();
-				});
+          new Function(res)();
+        });
 
-				reader.readAsText(file);
-			});
-		</script>
-	</body>
+        reader.readAsText(file);
+      });
+    </script>
+  </body>
 </html>
