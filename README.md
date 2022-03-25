@@ -17,11 +17,11 @@ define fib (n)
 ```
 Should be compiled to something similar to this (when unminified):
 ```js
-function(a){
+function(p0){
   v0 = 0;
   v1 = 1;
   v2 = 1;
-  for(let _ = +(a) || 0; _-- >= 0.5;){
+  for(let _ = +(p0) || 0; _-- >= 0.5;){
     v0 = v1;
     v1 = v2;
     v2 += v0;
