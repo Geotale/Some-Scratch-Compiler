@@ -4013,7 +4013,7 @@ ${token_sprites}[${sprite}]=new (${token_spriteDefs}[${sprite}] = function(){
           if(res[res.length - 1] !== "(")
             res += ",";
 
-          argIDs[argNames[k]] = generateID(token++);
+          argIDs[argNames[k]] = "a" + k;
           res += argIDs[argNames[k]];
         }
 
