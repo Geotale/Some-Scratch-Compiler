@@ -17,18 +17,18 @@ define fib (n)
 ```
 Should be compiled to something similar to this (when unminified):
 ```js
-function(p0){
+function(a0){
   v0 = 0;
   v1 = 1;
   v2 = 1;
-  for(let _ = +(p0) || 0; _-- >= 0.5;){
+  for(let _ = +(a0) || 0; _-- >= 0.5;){
     v0 = v1;
     v1 = v2;
     v2 += v0;
   }
 }
 ```
-Note that in the future this could possibly be optimized further upon knowing input types for a function -- For example, if this input would never have anything but a number the `+(a) || 0` could just become `(a) || 0` or even just `a`.
+Note that in the future this could possibly be optimized further upon knowing input types for a function -- For example, if this input would never have anything but a number the `+(a0) || 0` could just become `(a0) || 0` or even just `a0`.
 
 # Limitations
 As this is a work in progress, there is currently no way to render sprites, and the current method of rendering pen is via a Canvas Context 2D. This is due to the main focus of the code at the moment being towards the actual compiled code, leaving only a very simple base for rendering (see `render.js`).
