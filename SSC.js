@@ -516,8 +516,6 @@ function compileSB3(json, assets = {}, settings = {}){
               !isNum(right[2])
             )
           ){
-            console.log(left);
-            console.log(right);
             left = generateVal(block.inputs.OPERAND1, TYPE_STRING);
             right = generateVal(block.inputs.OPERAND2, TYPE_STRING);
           }
