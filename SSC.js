@@ -3789,20 +3789,8 @@ function compileSB3(json, assets = {}, settings = {}){
               //Should never apply for booleans
               if(arg[1] === null && (+arg[2]).toString() === arg[2].toString() && !Object.is(arg[2], -0))
                 res += arg[2].toString();
-              else {
+              else
                 res += compileVal(arg);
-                
-                if(res.endsWith("yield*p9(true")){
-                  console.log(ir[idx].args);
-                  console.log(arg);
-                  console.log(arg[1] === null);
-                  console.log(arg[0] === TYPE_BOOLEAN);
-                  console.log(toBool(arg[2]));
-                  console.log(escapeVal(toBool(arg[2])));
-                  console.log(compileVal(arg));
-                  console.log(res);
-                  throw new Error("Bad");
-                }
               }
             }
 
