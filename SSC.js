@@ -42,7 +42,7 @@ function compileSB3(json, assets = {}, settings = {}){
   let sprite = 0;
 
   function toBool(val){
-    return !!(+val) || (!isNum(val) && val != "false");
+    return !!(+val) || (!isNum(val) && val != false && val != "false");
   }
 
   //Generate a unique ID given some number
@@ -496,18 +496,14 @@ function compileSB3(json, assets = {}, settings = {}){
           //When you can infer types
           //Comparing numbers is faster than comparing strings
           if(
-            (
-              left[1] === null &&
-              isNum(left[2])
-            )
+            left[1] === null &&
+            isNum(left[2])
           ){
             //This looks so ugly -- Consider putting else on different lines
             left = generateVal(block.inputs.OPERAND1, TYPE_NUMBER);
           } else if(
-            (
-              right[1] === null &&
-              isNum(right[2])
-            )
+            right[1] === null &&
+            isNum(right[2])
           ){
             right = generateVal(block.inputs.OPERAND2, TYPE_NUMBER);
           } else if(
@@ -520,6 +516,8 @@ function compileSB3(json, assets = {}, settings = {}){
               !isNum(right[2])
             )
           ){
+            console.log(left);
+            console.log(right);
             left = generateVal(block.inputs.OPERAND1, TYPE_STRING);
             right = generateVal(block.inputs.OPERAND2, TYPE_STRING);
           }
@@ -2789,7 +2787,7 @@ function compileSB3(json, assets = {}, settings = {}){
             return token_answer;
 
           case "sensing_keypressed":
-            if(val[3][1] === null){
+            if(val[3][0] === TYPE_INT || val[3][1] === null){
               //Handle non-variable values without a function call
               if(val[3][0] === TYPE_STRING){
                 switch(val[3][2].toUpperCase()){
@@ -2800,7 +2798,7 @@ function compileSB3(json, assets = {}, settings = {}){
                     return `${token_keys}.ENTER`;
 
                   case "SPACE":
-                    return `${token_keys}.SPACE`;
+                    return `${token_keys}[" "]`;
 
                   case "LEFT ARROW":
                     return `${token_keys}.ARROWLEFT`;
@@ -2815,7 +2813,10 @@ function compileSB3(json, assets = {}, settings = {}){
                     return `${token_keys}.ARROWDOWN`;
 
                   default:
-                    return `${token_keys}[${JSON.stringify(val[3][2][0].toUpperCase())}]`;
+                    if("ABCDEFGHIJKLMNOPQRSTUVWXYZ_$".includes(val[3][2][0].toUpperCase()))
+                      return `${token_keys}.${val[3][2][0].toUpperCase()}`;
+                    else
+                      return `${token_keys}[${JSON.stringify(val[3][2][0].toUpperCase())}]`;
                 }
               } else
                 return `${token_keys}[${JSON.stringify(String.fromCharCode(val[3][2]))}]`;
@@ -2952,6 +2953,13 @@ function compileSB3(json, assets = {}, settings = {}){
 
 
           case "operator_equals": {
+            if(val[2][0][1] === null && isNum(val[2][0][2]) && Math.abs(+val[2][0][2]) != Infinity)
+              return `${+val[2][0][2]}==(${convertActualType(val[2][1], TYPE_FLOAT)})`;
+            
+            if(val[2][1][1] === null && isNum(val[2][1][2]) && Math.abs(+val[2][1][2]) != Infinity)
+              return `(${convertActualType(val[2][0], TYPE_FLOAT)})==${+val[2][1][2]}`;
+
+            
             //Use toLowerCase as little as possible
             //Note that this code is essentially duplicated 6 times for different comparison operators
             if(
@@ -2996,11 +3004,37 @@ function compileSB3(json, assets = {}, settings = {}){
 
             if(safeCompare(val, 0))
               return `(${convertActualType(val[2][0], TYPE_FLOAT)})==(${convertActualType(val[2][1], TYPE_FLOAT)})`;
+
+            if(val[2][0][0] === TYPE_FLOAT || val[2][0][0] === TYPE_NUMBER || val[2][0][0] === TYPE_INT){
+              if(val[2][0][1] === null){
+                if(isNaN(val[2][0][2]) || Math.abs(val[2][0][2]) === Infinity)
+                  return `${escapeStr(val[2][0][2].toString().toLowerCase())}==((${convertActualType(val[2][1], TYPE_FLOAT)})+"").toLowerCase()`;
+                else
+                  return `${val[2][0][2]}==(${convertActualType(val[2][1], TYPE_FLOAT)})`;
+              } else
+                return `((${convertActualType(val[2][0], TYPE_FLOAT)})+"").toLowerCase()==((${convertActualType(val[2][1], TYPE_FLOAT)})+"").toLowerCase()`;
+            }
+            
+            if(val[2][1][0] === TYPE_FLOAT || val[2][0][0] === TYPE_NUMBER || val[2][1][0] === TYPE_INT){
+              if(val[2][1][1] === null){
+                if(isNaN(val[2][1][2]) || Math.abs(val[2][1][2]) === Infinity)
+                  return `((${convertActualType(val[2][0], TYPE_FLOAT)})+"").toLowerCase()==${escapeStr(val[2][1][2].toString().toLowerCase())}`;
+                else
+                  return `(${convertActualType(val[2][0], TYPE_FLOAT)})==${val[2][1][2]}`;
+              } else
+                return `((${convertActualType(val[2][0], TYPE_FLOAT)})+"").toLowerCase()==((${convertActualType(val[2][1], TYPE_FLOAT)})+"").toLowerCase()`;
+            }
             
             return `${token_eq}(${compileVal(val[2][0])},${compileVal(val[2][1])})`;
           }
 
           case "operator_neq": {
+            if(val[2][0][1] === null && isNum(val[2][0][2]) && Math.abs(+val[2][0][2]) != Infinity)
+              return `${+val[2][0][2]}!=(${convertActualType(val[2][1], TYPE_FLOAT)})`;
+            
+            if(val[2][1][1] === null && isNum(val[2][1][2]) && Math.abs(+val[2][1][2]) != Infinity)
+              return `(${convertActualType(val[2][0], TYPE_FLOAT)})!=${+val[2][1][2]}`;
+            
             if(
               (
                 val[2][0][1] === null &&
@@ -3043,6 +3077,26 @@ function compileSB3(json, assets = {}, settings = {}){
 
             if(safeCompare(val, 1))
               return `(${convertActualType(val[2][0], TYPE_FLOAT)})!=(${convertActualType(val[2][1], TYPE_FLOAT)})`;
+            
+            if(val[2][0][0] === TYPE_FLOAT || val[2][0][0] === TYPE_NUMBER || val[2][0][0] === TYPE_INT){
+              if(val[2][0][1] === null){
+                if(isNaN(val[2][0][2]) || Math.abs(val[2][0][2]) === Infinity)
+                  return `${escapeStr(val[2][0][2].toString().toLowerCase())}!=((${convertActualType(val[2][1], TYPE_FLOAT)})+"").toLowerCase()`;
+                else
+                  return `${val[2][0][2]}!=(${convertActualType(val[2][1], TYPE_FLOAT)})`;
+              } else
+                return `((${convertActualType(val[2][0], TYPE_FLOAT)})+"").toLowerCase()!=((${convertActualType(val[2][1], TYPE_FLOAT)})+"").toLowerCase()`;
+            }
+            
+            if(val[2][1][0] === TYPE_FLOAT || val[2][0][0] === TYPE_NUMBER || val[2][1][0] === TYPE_INT){
+              if(val[2][1][1] === null){
+                if(isNaN(val[2][1][2]) || Math.abs(val[2][1][2]) === Infinity)
+                  return `((${convertActualType(val[2][0], TYPE_FLOAT)})+"").toLowerCase()!=${escapeStr(val[2][1][2].toString().toLowerCase())}`;
+                else
+                  return `(${convertActualType(val[2][0], TYPE_FLOAT)})!=${val[2][1][2]}`;
+              } else
+                return `((${convertActualType(val[2][0], TYPE_FLOAT)})+"").toLowerCase()!=((${convertActualType(val[2][1], TYPE_FLOAT)})+"").toLowerCase()`;
+            }
             
             return `${token_neq}(${compileVal(val[2][0])},${compileVal(val[2][1])})`;
           }
@@ -3611,7 +3665,7 @@ function compileSB3(json, assets = {}, settings = {}){
             else if(ir[idx].idx[1] === null && ir[idx].idx[2] === "last")
               res += `${list}.pop();`;
             else if(ir[idx].idx[1] !== null && (ir[idx].idx[0] === TYPE_STRING || ir[idx].idx[0] === TYPE_ANY))
-              res += `${token_listDelete}(${list},${convertVal(ir[idx].idx)});`;
+              res += `${token_listDelete}(${list},${convertVar(ir[idx].idx)});`;
             else
               res += `${list}.splice(${listIdx(convertVar(ir[idx].list[1]), ir[idx].idx)},1);`;
             break;
@@ -3735,8 +3789,21 @@ function compileSB3(json, assets = {}, settings = {}){
               //Should never apply for booleans
               if(arg[1] === null && (+arg[2]).toString() === arg[2].toString() && !Object.is(arg[2], -0))
                 res += arg[2].toString();
-              else
-                res += compileVal(ir[idx].args[i]);
+              else {
+                res += compileVal(arg);
+                
+                if(res.endsWith("yield*p9(true")){
+                  console.log(ir[idx].args);
+                  console.log(arg);
+                  console.log(arg[1] === null);
+                  console.log(arg[0] === TYPE_BOOLEAN);
+                  console.log(toBool(arg[2]));
+                  console.log(escapeVal(toBool(arg[2])));
+                  console.log(compileVal(arg));
+                  console.log(res);
+                  throw new Error("Bad");
+                }
+              }
             }
 
             res += ");";
@@ -3921,6 +3988,7 @@ ${token_sprites}[${sprite}]=new (${token_spriteDefs}[${sprite}] = function(){
         
         key = {
           "LEFT ARROW": "ARROWLEFT",
+          "SPACE": " ",
           "UP ARROW": "ARROWUP",
           "RIGHT ARROW": "ARROWRIGHT",
           "DOWN ARROW": "ARROWDOWN"
@@ -4018,8 +4086,8 @@ ${token_sprites}[${sprite}]=new (${token_spriteDefs}[${sprite}] = function(){
         }
 
         //TODO: Figure out how to make this not incorrect
-        res += `){${compileScript(ir[j], 1, ir[j][0].warp)}};`;
-//        res += `){\n${compileScript(ir[j], 1, true)}};`;
+//        res += `){${compileScript(ir[j], 1, ir[j][0].warp)}};`;
+        res += `){\n${compileScript(ir[j], 1, true)}};`;
       }
     }
 
